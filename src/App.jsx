@@ -23,6 +23,11 @@ function App() {
     });
   };
 
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import MealsPage from './pages/meals/MealsPage';
+
+function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
@@ -37,6 +42,8 @@ function App() {
             path="/favorites"
             element={<FavoritesPage favoriteIds={favoriteIds} onToggleFavorite={toggleFavorite} />}
           />
+          <Route path="/" element={<Navigate to="/meals" />} />
+          <Route path="/meals" element={<MealsPage />} />
         </Routes>
       </div>
     </Router>
@@ -44,3 +51,5 @@ function App() {
 }
 
 export default App;
+export default App;
+
