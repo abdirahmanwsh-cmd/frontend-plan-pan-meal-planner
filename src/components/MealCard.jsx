@@ -58,3 +58,4 @@ function MealCard({ meal, isFavorite = false, onToggleFavorite }) {
 }
 
 export default MealCard;
+export default MealCard;
