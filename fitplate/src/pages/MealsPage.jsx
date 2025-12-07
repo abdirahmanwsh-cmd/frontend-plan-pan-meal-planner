@@ -21,7 +21,7 @@ export default function MealsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.get("/meals");
-      setMeals(response.data);
+      setMeals(response.data || []);
     } catch (err) {
       console.error("Failed to fetch meals:", err);
       setError("Could not load meals from the server.");
@@ -36,26 +36,25 @@ export default function MealsPage() {
       const response = await apiClient.get("/meals/suggestion");
       setSuggestion(response.data);
     } catch (err) {
-      // suggestion is optional, so just log it
+      // suggestion is optional, do not break the page
       console.warn("Failed to fetch suggestion:", err);
       setSuggestion(null);
     }
   }
 
-  // NEW: toggle favourite for a single meal
+  // Toggle favourite: rely on success status, flip flag locally
   async function handleToggleFavorite(mealId) {
     try {
-      const response = await apiClient.post(`/meals/${mealId}/favorite`);
-      const isFavorite = response.data.favorite;
+      await apiClient.patch(`/meals/${mealId}/favorite`);
 
       setMeals(prev =>
         prev.map(m =>
-          m.id === mealId ? { ...m, is_favorite: isFavorite } : m
+          m.id === mealId ? { ...m, is_favorite: !m.is_favorite } : m
         )
       );
     } catch (err) {
       console.error("Failed to toggle favorite:", err);
-      // you can add a toast here later if you want
+      // You can add a toast here if you want
     }
   }
 
@@ -73,7 +72,7 @@ export default function MealsPage() {
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Meals</h1>
         <p className="text-sm text-gray-200">
-          Build a library of meals you’ll reuse for your weekly planner.
+          Build a library of meals you'll reuse for your weekly planner.
         </p>
       </header>
 
@@ -91,7 +90,7 @@ export default function MealsPage() {
         </div>
       )}
 
-      {/* Meals grid */}
+      {/* Meals grid / empty state */}
       {meals.length === 0 ? (
         <EmptyState
           title="No meals saved yet"

@@ -9,20 +9,28 @@ export default function PlannerPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // define and immediately call fetchSlots so it is ALWAYS in scope
     const fetchSlots = async () => {
       try {
         setLoading(true);
         setError(null);
 
         const response = await apiClient.get("/plans/current");
+        const data = response.data;
 
-        // If backend returns 404, treat it as “no plan yet”, not a hard error
+        // If backend returns a plan object with a slots array
+        if (data && Array.isArray(data.slots)) {
+          setSlots(data.slots);
+        } else if (Array.isArray(data)) {
+          // Defensive: if API returns slots directly as a list
+          setSlots(data);
+        } else {
+          setSlots([]);
+        }
       } catch (err) {
         console.error("Failed to load planner:", err);
 
         if (err.response && err.response.status === 404) {
-          // No current plan for this user – empty planner, no red error
+          // No current plan – empty planner, no error banner
           setSlots([]);
           setError(null);
         } else {
