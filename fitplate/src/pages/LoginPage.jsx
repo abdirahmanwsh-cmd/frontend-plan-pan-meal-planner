@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { auth, googleProvider } from "../lib/firebase";
 import { signInWithPopup, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import apiClient from "../api/client";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -9,6 +10,15 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [user, setUser] = useState(null);
+
+  const checkBackendAuth = async () => {
+  try {
+    const res = await apiClient.get("/auth/me");
+    console.log("Backend current user:", res.data);
+  } catch (err) {
+    console.error("Backend auth error:", err);
+  }
+};
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -19,6 +29,7 @@ const LoginPage = () => {
       localStorage.setItem("token", idToken);
       localStorage.setItem("user", JSON.stringify(result.user));
       setUser(result.user);
+      await checkBackendAuth();
     } catch (err) {
       console.error(err);
       setError("Failed to sign in with Google.");
