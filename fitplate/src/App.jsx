@@ -1,13 +1,13 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Navbar from "./components/Navbar.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import PlannerPage from "./pages/PlannerPage.jsx";
-import MealsPage from "./pages/MealsPage.jsx";
-import ShoppingListPage from "./pages/ShoppingListPage.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import { useAuth } from "./context/AuthContext.jsx";
+import Navbar from "./components/Navbar";
+import LoginPage from "./pages/LoginPage";
+import PlannerPage from "./pages/PlannerPage";
+import MealsPage from "./pages/MealsPage";
+import ShoppingListPage from "./pages/ShoppingListPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
   const { user, loading } = useAuth();

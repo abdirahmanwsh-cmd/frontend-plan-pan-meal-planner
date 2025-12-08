@@ -2,9 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100;
+/* Use classes for Tailwind styling instead of @apply on body */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #f9fafb; /* fallback light bg */
+  color: #1f2937; /* fallback dark text */
 }
+
+/* Example of dark mode using class */
+.dark body {
+  background-color: #111827; /* Tailwind slate-900 */
+  color: #f3f4f6; /* Tailwind gray-100 */
+}
+
+/* Links */
 a {
-  @apply text-blue-600 dark:text-blue-400;
+  color: #2563eb; /* Tailwind blue-600 */
 }
+
+.dark a {
+  color: #60a5fa; /* Tailwind blue-400 */
+}
+

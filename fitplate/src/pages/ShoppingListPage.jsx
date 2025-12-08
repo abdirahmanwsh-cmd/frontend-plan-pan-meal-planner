@@ -1,39 +1,80 @@
+
 import React, { useEffect, useState } from "react";
-import apiClient from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import EmptyState from "../components/EmptyState";
 
+// ✅ Mock Shopping Data
+const MOCK_ITEMS = [
+  { id: 1, name: "chicken breast", quantity: "1 kg", category: "Proteins", bought: false },
+  { id: 2, name: "eggs", quantity: "12 pcs", category: "Proteins", bought: false },
+  { id: 3, name: "brown rice", quantity: "2 cups", category: "Grains", bought: false },
+  { id: 4, name: "broccoli", quantity: "2 heads", category: "Vegetables", bought: false },
+  { id: 5, name: "spinach", quantity: "1 bunch", category: "Vegetables", bought: false },
+  { id: 6, name: "tomatoes", quantity: "5 pcs", category: "Vegetables", bought: false },
+  { id: 7, name: "bell peppers", quantity: "3 pcs", category: "Vegetables", bought: false },
+  { id: 8, name: "onions", quantity: "4 pcs", category: "Vegetables", bought: false },
+  { id: 9, name: "garlic", quantity: "1 bulb", category: "Vegetables", bought: false },
+  { id: 10, name: "olive oil", quantity: "500 ml", category: "Pantry", bought: false },
+];
+
 export default function ShoppingListPage() {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // ➜ Form state (mock add)
+  const [newItem, setNewItem] = useState({
+    name: "",
+    quantity: "",
+    category: "Vegetables",
+  });
 
   useEffect(() => {
-    async function fetchShoppingList() {
-      try {
-        setLoading(true);
-        setError(null);
+    // ✅ Simulate API call
+    const timer = setTimeout(() => {
+      setItems(MOCK_ITEMS);
+      setLoading(false);
+    }, 700);
 
-        const response = await apiClient.get("/plans/shopping-list");
-        const data = response.data;
-
-        // Backend is expected to return an array (likely of strings)
-        if (Array.isArray(data)) {
-          setItems(data);
-        } else {
-          setItems([]);
-        }
-      } catch (err) {
-        console.error("Failed to load shopping list:", err);
-        setError("Could not load shopping list from the server.");
-        setItems([]); // no fake sample data
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchShoppingList();
+    return () => clearTimeout(timer);
   }, []);
+
+  // ✅ Toggle bought
+  const toggleBought = (id) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, bought: !item.bought } : item
+      )
+    );
+  };
+
+  // ✅ Remove item
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // ✅ Add item
+  const addItem = (e) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.quantity) return;
+
+    setItems((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        ...newItem,
+        bought: false,
+      },
+    ]);
+
+    setNewItem({ name: "", quantity: "", category: "Vegetables" });
+  };
+
+  // ✅ Group by category
+  const groupedItems = items.reduce((acc, item) => {
+    acc[item.category] = acc[item.category] || [];
+    acc[item.category].push(item);
+    return acc;
+  }, {});
 
   if (loading) {
     return (
@@ -45,47 +86,96 @@ export default function ShoppingListPage() {
 
   return (
     <div className="min-h-screen text-gray-900 dark:text-gray-100">
-      {/* Error banner */}
-      {error && (
-        <div className="max-w-4xl mx-auto mt-6 px-4">
-          <div className="bg-red-600 text-white text-sm px-4 py-3 rounded-md shadow">
-            {error}
-          </div>
-        </div>
-      )}
-
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Shopping List</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              These ingredients are generated from your current weekly plan.
-            </p>
-          </div>
+        <header className="mb-6">
+          <h1 className="text-3xl font-bold">Shopping List</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Ingredients generated from your weekly meal plan
+          </p>
         </header>
 
-        {/* Empty state */}
-        {items.length === 0 && !error && (
-          <EmptyState message="No ingredients yet. Add meals to your planner to generate a shopping list." />
-        )}
+        {/* ✅ Add Item Form */}
+        <form
+          onSubmit={addItem}
+          className="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-3"
+        >
+          <input
+            type="text"
+            placeholder="Item name"
+            value={newItem.name}
+            onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+          />
+          <input
+            type="text"
+            placeholder="Quantity"
+            value={newItem.quantity}
+            onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+          />
+          <select
+            value={newItem.category}
+            onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+          >
+            <option>Vegetables</option>
+            <option>Proteins</option>
+            <option>Grains</option>
+            <option>Pantry</option>
+          </select>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition"
+          >
+            Add
+          </button>
+        </form>
 
-        {/* Items list */}
-        {items.length > 0 && (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
-            <ul className="space-y-2">
-              {items.map((item, index) => (
-                <li
-                  key={index}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <span className="text-sm font-medium capitalize">
-                    {typeof item === "string" ? item : JSON.stringify(item)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {items.length === 0 && <EmptyState message="Your shopping list is empty." />}
+
+        {/* ✅ Category Sections */}
+        <div className="space-y-6">
+          {Object.entries(groupedItems).map(([category, categoryItems]) => (
+            <div
+              key={category}
+              className="bg-white dark:bg-gray-900 border rounded-xl p-4"
+            >
+              <h2 className="text-lg font-semibold mb-3">{category}</h2>
+              <ul className="space-y-2">
+                {categoryItems.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center justify-between px-3 py-2 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={item.bought}
+                        onChange={() => toggleBought(item.id)}
+                      />
+                      <span
+                        className={`capitalize ${
+                          item.bought ? "line-through text-gray-400" : ""
+                        }`}
+                      >
+                        {item.name}{" "}
+                        <span className="text-sm text-gray-500">
+                          ({item.quantity})
+                        </span>
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-red-500 hover:text-red-700 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

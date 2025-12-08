@@ -1,168 +1,148 @@
+// src/pages/LoginPage.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-} from "firebase/auth";
+import { auth, googleProvider } from "../lib/firebase";
+import { signInWithPopup, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import apiClient from "../api/client";
 
-import { auth, googleProvider } from "../lib/firebase.js";
-import apiClient from "../api/client.js";
-import LoadingSpinner from "../components/LoadingSpinner.jsx";
-
-export default function LoginPage() {
-  const navigate = useNavigate();
-
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
 
-  // Hit backend /auth/me with the token to make sure everything is wired
   const checkBackendAuth = async () => {
-    try {
-      const res = await apiClient.get("/auth/me");
-      console.log("Backend current user:", res.data);
-    } catch (err) {
-      console.error("Backend auth error:", err);
-      // we don't block the login on this for now, just log it
-    }
-  };
+  try {
+    const res = await apiClient.get("/auth/me");
+    console.log("Backend current user:", res.data);
+  } catch (err) {
+    console.error("Backend auth error:", err);
+  }
+};
 
   const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
     try {
-      setLoading(true);
-      setError(null);
-
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      const token = await user.getIdToken();
-      localStorage.setItem("token", token);
-
+      const idToken = await result.user.getIdToken();
+      localStorage.setItem("token", idToken);
+      localStorage.setItem("user", JSON.stringify(result.user));
+      setUser(result.user);
       await checkBackendAuth();
-
-      setLoading(false);
-      navigate("/planner", { replace: true });
     } catch (err) {
-      console.error("Failed to sign in with Google:", err);
-      setError("Failed to sign in with Google. Please try again.");
+      console.error(err);
+      setError("Failed to sign in with Google.");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
     try {
-      setLoading(true);
-      setError(null);
-
       const result = await signInWithEmailAndPassword(auth, email, password);
-      const user = result.user;
-
-      const token = await user.getIdToken();
-      localStorage.setItem("token", token);
-
-      await checkBackendAuth();
-
-      setLoading(false);
-      navigate("/planner", { replace: true });
+      const idToken = await result.user.getIdToken();
+      localStorage.setItem("token", idToken);
+      localStorage.setItem("user", JSON.stringify(result.user));
+      setUser(result.user);
     } catch (err) {
-      console.error("Failed to sign in with email/password:", err);
+      console.error(err);
       setError("Invalid email or password.");
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setError("Enter your email first to reset password.");
-      return;
-    }
+  const handleForgotPassword = async () => {
+    if (!email) return setError("Please enter your email to reset password.");
     try {
-      setLoading(true);
-      setError(null);
       await sendPasswordResetEmail(auth, email);
-      setLoading(false);
-      alert("Password reset email sent.");
+      alert("Password reset email sent!");
     } catch (err) {
-      console.error("Failed to send reset email:", err);
-      setError("Could not send password reset email.");
-      setLoading(false);
+      console.error(err);
+      setError("Failed to send reset email.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 shadow-lg rounded-xl p-6 space-y-4">
-        <h1 className="text-2xl font-semibold text-center mb-2">Sign in</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-100 to-red-50">
+      <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md">
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to fitplate</h1>
 
-        {error && (
-          <p className="mb-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-            {error}
-          </p>
+        {error && <div className="mb-4 text-red-500 text-center">{error}</div>}
+
+        {user ? (
+          <div className="text-center text-green-600 font-medium">
+            Logged in as {user.displayName || user.email}
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className={`w-full py-3 mb-6 flex justify-center items-center gap-2 text-white rounded-lg transition-colors ${
+                loading
+                  ? "bg-red-300 cursor-not-allowed"
+                  : "bg-red-500 hover:bg-red-600"
+              }`}
+            >
+           
+             <img src="/google.png" alt="Google" className="w-5 h-5" />
+              {loading ? "Signing in..." : "Sign in with Google"}
+            </button>
+
+            <form className="flex flex-col gap-4" onSubmit={handleEmailSignIn}>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+                required
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors ${
+                  loading ? "bg-red-300 cursor-not-allowed" : ""
+                }`}
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </form>
+
+            <p className="text-sm text-gray-500 text-right mt-2">
+              <button
+                onClick={handleForgotPassword}
+                className="text-red-500 hover:underline"
+              >
+                Forgot password?
+              </button>
+            </p>
+          </>
         )}
-
-        {loading && (
-          <div className="mb-2">
-            <LoadingSpinner />
-          </div>
-        )}
-
-        {/* Email/password form */}
-        <form onSubmit={handleEmailSignIn} className="space-y-3">
-          <div>
-            <label className="block text-sm mb-1">Email</label>
-            <input
-              type="email"
-              className="w-full border rounded px-3 py-2 text-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Password</label>
-            <input
-              type="password"
-              className="w-full border rounded px-3 py-2 text-sm"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-60"
-          >
-            Sign in with email
-          </button>
-        </form>
-
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={loading}
-          className="w-full border border-gray-300 bg-white py-2 rounded-md text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
-        >
-          Continue with Google
-        </button>
-
-        <button
-          type="button"
-          onClick={handleResetPassword}
-          disabled={loading}
-          className="w-full text-xs text-indigo-600 hover:underline mt-1"
-        >
-          Forgot your password?
-        </button>
       </div>
     </div>
   );
-}
+};
+
+export default LoginPage;
+
+
+
+
+
+
+
+

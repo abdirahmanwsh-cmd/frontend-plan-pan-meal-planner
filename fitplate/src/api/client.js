@@ -2,8 +2,10 @@ import axios from "axios";
 
 // Base URL for your FastAPI backend
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
-  timeout: 10000,
+  baseURL:"https://backend-plan-pan-meal-planner.onrender.com",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
 // Optional: attach token automatically if present
