@@ -1,22 +1,26 @@
-// /src/components/PlannerGrid.jsx 
-export default function PlannerGrid({ slots = [] }) {
-  // Handle empty slots case
-  if (!slots || slots.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500">
-        <p>No meals planned yet. Add some meals!</p>
-      </div>
-    );
-  }
+import React from "react";
+import PlannerCell from "./PlannerCell";
+
+export default function PlannerGrid({ slots = [], onEdit }) {
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const meals = ["breakfast", "lunch", "dinner"];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {slots.map((slot, index) => (
-        <div key={index} className="bg-white rounded shadow p-4">
-          <h3 className="font-semibold">{slot.date || 'Unknown date'}</h3>
-          <p>{slot.recipe?.name || slot.meal_type || 'Meal'}</p>
-        </div>
+    <div className="grid grid-cols-7 gap-4">
+      {/* Header row */}
+      {days.map((day) => (
+        <div key={day} className="text-center font-bold">{day}</div>
       ))}
+
+      {/* Meal slots */}
+      {meals.map((mealTime) =>
+        days.map((day) => {
+          const slot = slots.find(
+            (s) => s.day === day && s.meal_time === mealTime
+          ) || { day, meal_time: mealTime, meal: null };
+          return <PlannerCell key={`${day}-${mealTime}`} slot={slot} onEdit={onEdit} />;
+        })
+      )}
     </div>
   );
 }
