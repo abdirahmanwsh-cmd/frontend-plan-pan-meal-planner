@@ -92,19 +92,13 @@ export default function MealsPage() {
       const response = await apiClient.get("/meals/suggestion");
       setSuggestion(response.data);
     } catch (err) {
-      console.warn("No suggestion from backend:", err);
-      
-      // Fall back to local data
-      if (meals.length > 0) {
-        const randomIndex = Math.floor(Math.random() * meals.length);
-        setSuggestion(meals[randomIndex]);
-      } else {
-        setSuggestion(null);
-      }
+      // suggestion is optional, do not break the page
+      console.warn("Failed to fetch suggestion:", err);
+      setSuggestion(null);
     }
   }
 
-  // Toggle favorite 
+  // Toggle favourite: rely on success status, flip flag locally
   async function handleToggleFavorite(mealId) {
     try {
       // Test backend toggle
@@ -119,77 +113,9 @@ export default function MealsPage() {
       
       console.log(`✓ Favorite toggled on backend for meal ${mealId}`);
     } catch (err) {
-      console.log("Backend unavailable, using localStorage for favorite");
-      
-      // Fall back to localStorage if backend fails
-      const updatedMeals = meals.map(meal => 
-        meal.id === mealId 
-          ? { ...meal, is_favorite: !meal.is_favorite }
-          : meal
-      );
-      
-      setMeals(updatedMeals);
-      localStorage.setItem('planPanMeals', JSON.stringify(updatedMeals));
+      console.error("Failed to toggle favorite:", err);
+      // You can add a toast here if you want
     }
-  }
-
-  // Add new meal 
-  async function handleAddMeal() {
-    if (!newMeal.name.trim()) {
-      alert("Please enter a meal name");
-      return;
-    }
-
-    try {
-      // Test backend addition
-      const response = await apiClient.post("/meals", newMeal);
-      const addedMeal = response.data;
-      
-      setMeals(prev => [...prev, addedMeal]);
-      console.log("✓ Meal added via backend");
-    } catch (err) {
-      console.log("Backend unavailable, saving to localStorage");
-      
-      // Fall back to localStorage if backend fails
-      const mealId = meals.length > 0 ? Math.max(...meals.map(m => m.id)) + 1 : 1;
-      const mealToAdd = {
-        ...newMeal,
-        id: mealId
-      };
-      
-      const updatedMeals = [...meals, mealToAdd];
-      setMeals(updatedMeals);
-      localStorage.setItem('planPanMeals', JSON.stringify(updatedMeals));
-    }
-
-    // Reset form
-    setNewMeal({
-      name: "",
-      category: "lunch",
-      prep_time: 20,
-      calories: 300,
-      description: "",
-      is_favorite: false
-    });
-    setShowAddForm(false);
-  }
-
-  // Delete meal 
-  async function handleDeleteMeal(mealId) {
-    if (!window.confirm("Are you sure you want to delete this meal?")) return;
-
-    try {
-      // Test backend deletion
-      await apiClient.delete(`/meals/${mealId}`);
-      console.log(`✓ Meal ${mealId} deleted from backend`);
-    } catch (err) {
-      console.log("Backend unavailable, deleting from localStorage");
-    }
-
-    // Update UI regardless
-    const updatedMeals = meals.filter(meal => meal.id !== mealId);
-    setMeals(updatedMeals);
-    localStorage.setItem('planPanMeals', JSON.stringify(updatedMeals));
   }
 
   if (loading && meals.length === 0) {
