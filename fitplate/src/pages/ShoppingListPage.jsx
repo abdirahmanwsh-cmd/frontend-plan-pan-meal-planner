@@ -14,19 +14,28 @@ export default function ShoppingListPage() {
         setLoading(true);
         setError(null);
 
-        const response = await apiClient.get("/plans/shopping-list");
+        // Updated endpoint
+        const response = await apiClient.get("/pages/shopping-list");
         const data = response.data;
 
-        // Backend is expected to return an array (likely of strings)
+        // Handle array returned from backend
         if (Array.isArray(data)) {
           setItems(data);
         } else {
           setItems([]);
         }
       } catch (err) {
-        console.error("Failed to load shopping list:", err);
+        // Detailed logging for debugging
+        if (err.response) {
+          console.error("Backend returned error:", err.response.status, err.response.data);
+        } else if (err.request) {
+          console.error("No response received from backend:", err.request);
+        } else {
+          console.error("Error setting up request:", err.message);
+        }
+
         setError("Could not load shopping list from the server.");
-        setItems([]); // no fake sample data
+        setItems([]);
       } finally {
         setLoading(false);
       }
