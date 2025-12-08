@@ -36,13 +36,13 @@ export default function MealsPage() {
       const response = await apiClient.get("/meals/suggestion");
       setSuggestion(response.data);
     } catch (err) {
-      // suggestion is optional, do not break the page
+      // suggestion is optional, don’t break the page
       console.warn("Failed to fetch suggestion:", err);
       setSuggestion(null);
     }
   }
 
-  // Toggle favourite: rely on success status, flip flag locally
+  // Toggle favourite: we assume backend succeeds and flip local state
   async function handleToggleFavorite(mealId) {
     try {
       await apiClient.patch(`/meals/${mealId}/favorite`);
@@ -54,7 +54,7 @@ export default function MealsPage() {
       );
     } catch (err) {
       console.error("Failed to toggle favorite:", err);
-      // You can add a toast here if you want
+      // Optional: you can setError(...) or show a toast here
     }
   }
 
